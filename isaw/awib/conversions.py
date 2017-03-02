@@ -62,6 +62,7 @@ class MasterMaker(Historian):
 
     def make(self):
         self._make_mode_rgb()
+        self._standardize_icc()
         # if dest is None:
         #     return self.master
 
@@ -70,6 +71,15 @@ class MasterMaker(Historian):
             self.rgb = self.original
         else:
             self.rgb = self.original.convert('RGB')
+
+    def _standardize_icc(self):
+        if self.profiles['original'] == self.profiles['srgb4']:
+            self.srgb4 = self.rgb
+        else:
+            self.srgb4 = profileToProfile(
+                self.rgb,
+                self.profiles['original'],
+                self.profiles['srgb4'])
 
     def _original_profile(self, force=False):
         if not force:

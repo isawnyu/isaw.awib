@@ -1,9 +1,11 @@
+from io import BytesIO
 from isaw.awib.conversions import MasterMaker
 import logging
 from nose.tools import assert_equal
 from os import listdir
 from os.path import dirname, isfile, join, realpath
 from PIL import Image
+from PIL.ImageCms import getOpenProfile, getProfileName
 
 
 class TestMakeConversions():
@@ -42,5 +44,14 @@ class TestMakeConversions():
             rgb = maker.rgb
             assert_equal(rgb.mode, 'RGB')
 
-
+    def test_master_maker_icc(self):
+        for fn, im in self.images.items():
+            maker = MasterMaker(im)
+            maker.make()
+            srgb4 = maker.srgb4
+            assert_equal(
+                getProfileName(
+                    getOpenProfile(
+                        BytesIO(srgb4.info['icc_profile']))).strip(),
+                'sRGB v4 ICC preference perceptual intent beta')
 
