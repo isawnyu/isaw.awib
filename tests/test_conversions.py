@@ -1,4 +1,4 @@
-from isaw.awib.conversions import make_master
+from isaw.awib.conversions import MasterMaker
 import logging
 from nose.tools import assert_equal
 from os import listdir
@@ -30,9 +30,17 @@ class TestMakeConversions():
         assert_equal(len(self.images), 8)
 
     def test_make_master_from_image(self):
-        make_master(self.images['cat_drawer.tif'])
+        maker = MasterMaker(self.images['cat_drawer.tif'])
 
     def test_make_master_from_file(self):
-        make_master(join(self.data_dir, 'cat_drawer.tif'))
+        maker = MasterMaker(join(self.data_dir, 'cat_drawer.tif'))
+
+    def test_master_maker_modes(self):
+        for fn, im in self.images.items():
+            maker = MasterMaker(im)
+            maker.make()
+            rgb = maker.rgb
+            assert_equal(rgb.mode, 'RGB')
+
 
 
