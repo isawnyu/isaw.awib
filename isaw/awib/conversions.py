@@ -1,11 +1,10 @@
 from datetime import datetime
 from io import BytesIO
 import logging
-from logging import DEBUG, INFO, WARNING, ERROR, CRITICAL
+from logging import DEBUG, INFO
 from os.path import abspath, dirname, join
-from PIL import Image
+from PIL import Image, TiffImagePlugin
 from PIL.ImageCms import getOpenProfile, getProfileName, profileToProfile
-import sys
 
 
 class Historian():
@@ -59,6 +58,7 @@ class MasterMaker(Historian):
                     'sRGB_v4_ICC_preference.icc')),
         }
         self.profiles['original'] = self._original_profile()
+        self.master_info = TiffImagePlugin.ImageFileDirectory()
 
     def make(self):
         self._make_mode_rgb()
@@ -69,17 +69,36 @@ class MasterMaker(Historian):
     def _make_mode_rgb(self):
         if self.original.mode == 'RGB':
             self.rgb = self.original
+            self.log('Original color mode is RGB.')
         else:
             self.rgb = self.original.convert('RGB')
+            self.log(
+                'Original color mode was {} so converted to RGB.'
+                ''.format(self.original.mode))
 
-    def _standardize_icc(self):
-        if self.profiles['original'] == self.profiles['srgb4']:
-            self.srgb4 = self.rgb
+    def _standardize_icc(self, target='srgb4'):
+        profile = self.profiles[target]
+        profile_name = getProfileName(profile).strip()
+        original = self.profiles['original']
+        original_name = getProfileName(original).strip()
+        if original == profile:
+            self.master = self.rgb
+            self.log(
+                'Original ICC profile was already the specified target ({}).'
+                ''.format(profile_name))
         else:
-            self.srgb4 = profileToProfile(
+            self.master = profileToProfile(
                 self.rgb,
-                self.profiles['original'],
-                self.profiles['srgb4'])
+                original,
+                profile)
+            self.log(
+                'Original ICC profile ({}) was converted to the standard '
+                'target ({}).'
+                ''.format(
+                    original_name,
+                    profile_name))
+        self.master_info[TiffImagePlugin.ICCPROFILE] = profile.tobytes()
+        self.master_info.tagtype[TiffImagePlugin.ICCPROFILE] = 1
 
     def _original_profile(self, force=False):
         if not force:
