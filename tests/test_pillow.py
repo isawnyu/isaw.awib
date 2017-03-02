@@ -80,4 +80,3 @@ class TestPillow:
                     'IEC 61966-2.1 Default RGB colour space - sRGB')
             else:
                 assert_not_in('icc_profile', im.info.keys())
-        # raise Exception('whee')
