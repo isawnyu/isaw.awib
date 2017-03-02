@@ -4,7 +4,7 @@ import logging
 from nose.tools import assert_equal
 from os import listdir
 from os.path import dirname, isfile, join, realpath
-from PIL import Image
+from PIL import Image, TiffImagePlugin
 from PIL.ImageCms import getOpenProfile, getProfileName
 
 
@@ -32,10 +32,10 @@ class TestMakeConversions():
         assert_equal(len(self.images), 8)
 
     def test_make_master_from_image(self):
-        maker = MasterMaker(self.images['cat_drawer.tif'])
+        MasterMaker(self.images['cat_drawer.tif'])
 
     def test_make_master_from_file(self):
-        maker = MasterMaker(join(self.data_dir, 'cat_drawer.tif'))
+        MasterMaker(join(self.data_dir, 'cat_drawer.tif'))
 
     def test_master_maker_modes(self):
         for fn, im in self.images.items():
@@ -48,10 +48,13 @@ class TestMakeConversions():
         for fn, im in self.images.items():
             maker = MasterMaker(im)
             maker.make()
-            srgb4 = maker.srgb4
+            master = maker.master
             assert_equal(
                 getProfileName(
                     getOpenProfile(
-                        BytesIO(srgb4.info['icc_profile']))).strip(),
+                        BytesIO(master.info['icc_profile']))).strip(),
                 'sRGB v4 ICC preference perceptual intent beta')
-
+            raw_profile = getOpenProfile(
+                BytesIO(maker.master_info[TiffImagePlugin.ICCPROFILE]))
+            name = getProfileName(raw_profile).strip()
+            assert_equal(name, 'sRGB v4 ICC preference perceptual intent beta')
