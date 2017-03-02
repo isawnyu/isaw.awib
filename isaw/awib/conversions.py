@@ -63,8 +63,19 @@ class MasterMaker(Historian):
     def make(self):
         self._make_mode_rgb()
         self._standardize_icc()
-        # if dest is None:
-        #     return self.master
+        return self.master
+
+    def save(self, dest=None):
+        if dest is None:
+            if self.dest is None:
+                raise RuntimeError(
+                    'save method called with no destination filename')
+            else:
+                destination = abspath(self.dest)
+        else:
+            destination = abspath(dest)
+        self.master.DEBUG = True
+        self.master.save(destination, tiffinfo=self.master_info)
 
     def _make_mode_rgb(self):
         if self.original.mode == 'RGB':
