@@ -1,10 +1,10 @@
-
-from isaw.awib.conversions import make_master
+from io import BytesIO
 import logging
 from nose.tools import assert_equal, assert_in, assert_not_in
 from os import listdir
 from os.path import dirname, isfile, join, realpath, splitext
 from PIL import Image
+from PIL.ImageCms import getOpenProfile, getProfileName
 
 
 FORMATS = {
@@ -74,6 +74,10 @@ class TestPillow:
             name, extension = splitext(fn)
             if extension[1:] in HAS_PROFILE:
                 assert_in('icc_profile', im.info.keys())
+                profile = getOpenProfile(BytesIO(im.info['icc_profile']))
+                assert_equal(
+                    getProfileName(profile).strip(),
+                    'IEC 61966-2.1 Default RGB colour space - sRGB')
             else:
                 assert_not_in('icc_profile', im.info.keys())
-
+        # raise Exception('whee')
