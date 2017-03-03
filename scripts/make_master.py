@@ -1,12 +1,14 @@
 """
-Python 3 script template (changeme)
+Make a master image for an existing original
 """
 
 import argparse
 from functools import wraps
 import inspect
+from isaw.awib.conversions import MasterMaker
 import logging
 import os
+from os.path import isfile, isdir, join, realpath, split, splitext
 import re
 import sys
 import traceback
@@ -19,6 +21,7 @@ POSITIONAL_ARGUMENTS = [
     ['-v', '--verbose', False, 'verbose output (logging level == INFO)'],
     ['-w', '--veryverbose', False,
         'very verbose output (logging level == DEBUG)'],
+    ['-x', '--overwrite', False, 'overwite existing destination file']
 ]
 
 
@@ -34,14 +37,41 @@ def arglogger(func):
     return inner
 
 
+def eprint(msg):
+    print('ERROR: {}'.format(msg), file=sys.stderr)
+
+
+def erexit(msg):
+    eprint(msg)
+    sys.exit(1)
+
+
 @arglogger
 def main(args):
     """
     main function
     """
     # logger = logging.getLogger(sys._getframe().f_code.co_name)
-    pass
+    src = realpath(args.original)
+    dest = realpath(args.destination)
 
+    if not isfile(src):
+        erexit('Original (input) file not found: "{}"'.format(src))
+    else:
+        head, tail = split(src)
+        name, extension = splitext(tail)
+    if isdir(dest):
+        dest = join(dest, '{}.tif'.format(name))
+    if isfile(dest) and not args.overwrite:
+        erexit('Destination file exists: "{}"'.format(dest))
+    head, tail = split(dest)
+    name, extension = splitext(tail)
+    if extension != '.tif':
+        erexit(
+            'Destination (output) must be a TIFF file ending in ".tif"')
+    m = MasterMaker(src)
+    m.make()
+    m.save(dest)
 
 if __name__ == "__main__":
     log_level = DEFAULT_LOG_LEVEL
@@ -75,6 +105,14 @@ if __name__ == "__main__":
         #     type=str,
         #     nargs='1',
         #     help="foo is better than bar except when it isn't")
+        parser.add_argument(
+            'original',
+            type=str,
+            help='path to original image file')
+        parser.add_argument(
+            'destination',
+            type=str,
+            help='path to destination')
         args = parser.parse_args()
         if args.loglevel is not None:
             args_log_level = re.sub('\s+', '', args.loglevel.strip().upper())
