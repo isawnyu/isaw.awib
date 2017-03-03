@@ -9,6 +9,7 @@ from PIL.ImageCms import getOpenProfile, getProfileName
 from PIL.ImageStat import Stat
 from shutil import rmtree
 
+FILE_COUNT = 10
 
 class TestMakeConversions():
 
@@ -20,7 +21,7 @@ class TestMakeConversions():
             fn for fn in listdir(self.data_dir) if isfile(
                 join(self.data_dir, fn))]
         self.file_list = [f for f in self.file_list if f != '.DS_Store']
-        assert_equal(len(self.file_list), 9)
+        assert_equal(len(self.file_list), FILE_COUNT)
         self.images = {}
         self.open_all()
         try:
@@ -36,7 +37,6 @@ class TestMakeConversions():
             self.logger.debug('filename: "{}"'.format(fn))
             im = Image.open(join(self.data_dir, fn))
             self.images[fn] = im
-        assert_equal(len(self.images), 9)
 
     def test_make_master_from_image(self):
         MasterMaker(self.images['cat_drawer.tif'])

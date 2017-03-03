@@ -36,7 +36,6 @@ class TestPillow:
         self.file_list = [
             fn for fn in listdir(self.data_dir) if isfile(
                 join(self.data_dir, fn))]
-        assert_equal(len(self.file_list), 9)
         self.images = {}
         self.open_all()
 
@@ -48,18 +47,12 @@ class TestPillow:
             self.logger.debug('filename: "{}"'.format(fn))
             im = Image.open(join(self.data_dir, fn))
             self.images[fn] = im
-        assert_equal(len(self.images), 9)
 
     def test_format(self):
         for fn, im in self.images.items():
             self.logger.debug('{} is {}'.format(fn, im.format))
             name, extension = splitext(fn)
             assert_equal(im.format, FORMATS[extension[1:]])
-
-    def test_size(self):
-        for fn, im in self.images.items():
-            self.logger.debug('{} size is "{}"'.format(fn, im.size))
-            assert_equal(im.size, (WIDTH, HEIGHT))
 
     def test_mode(self):
         for fn, im in self.images.items():
