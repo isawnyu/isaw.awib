@@ -46,6 +46,30 @@ def erexit(msg):
     sys.exit(1)
 
 
+def make_masters(src, dest, overwrite):
+    if isfile(dest):
+        erexit('Destination must be a directory if source is a directory')
+
+
+def make_a_master(src, dest, overwrite):
+    head, tail = split(src)
+    name, extension = splitext(tail)
+    if isdir(dest):
+        outf = join(dest, '{}.tif'.format(name))
+    else:
+        outf = dest
+    if isfile(outf) and not overwrite:
+        erexit('Destination file exists: "{}"'.format(outf))
+    head, tail = split(outf)
+    name, extension = splitext(tail)
+    if extension != '.tif':
+        erexit(
+            'Destination (output) must be a TIFF file ending in ".tif"')
+    m = MasterMaker(src)
+    m.make()
+    m.save(outf)
+
+
 @arglogger
 def main(args):
     """
@@ -55,23 +79,12 @@ def main(args):
     src = realpath(args.original)
     dest = realpath(args.destination)
 
-    if not isfile(src):
+    if isdir(src):
+        make_masters(src, dest, args.overwrite)
+    elif not isfile(src):
         erexit('Original (input) file not found: "{}"'.format(src))
     else:
-        head, tail = split(src)
-        name, extension = splitext(tail)
-    if isdir(dest):
-        dest = join(dest, '{}.tif'.format(name))
-    if isfile(dest) and not args.overwrite:
-        erexit('Destination file exists: "{}"'.format(dest))
-    head, tail = split(dest)
-    name, extension = splitext(tail)
-    if extension != '.tif':
-        erexit(
-            'Destination (output) must be a TIFF file ending in ".tif"')
-    m = MasterMaker(src)
-    m.make()
-    m.save(dest)
+        make_a_master(src, dest, args.overwrite)
 
 if __name__ == "__main__":
     log_level = DEFAULT_LOG_LEVEL
