@@ -11,6 +11,7 @@ from shutil import rmtree
 
 FILE_COUNT = 10
 
+
 class TestMakeConversions():
 
     def setUp(self):
