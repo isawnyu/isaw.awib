@@ -116,7 +116,7 @@ class MasterMaker(Historian):
                 BytesIO(self.original.info['icc_profile']))
         except KeyError:
             raw_profile = self._get_profile_from_file(
-                'sRGB_IEC61966-2-1_black_scaled')
+                'sRGB2014')
             self.log(
                 'Original image does not have an internal ICC color profile.'
                 '{} has been assigned.'
