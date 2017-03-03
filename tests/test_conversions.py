@@ -4,7 +4,7 @@ import logging
 from nose.tools import assert_equal
 from os import listdir, mkdir
 from os.path import abspath, dirname, isfile, join, realpath, splitext
-from PIL import Image, TiffImagePlugin
+from PIL import Image
 from PIL.ImageCms import getOpenProfile, getProfileName
 from PIL.ImageStat import Stat
 from shutil import rmtree

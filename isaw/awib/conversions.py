@@ -1,9 +1,9 @@
 from datetime import datetime
 from io import BytesIO
 import logging
-from logging import DEBUG, INFO, CRITICAL
+from logging import DEBUG, INFO
 from os.path import abspath, dirname, join, realpath
-from PIL import Image, TiffImagePlugin
+from PIL import Image
 from PIL.ImageCms import (applyTransform, buildTransform, getOpenProfile,
                           getProfileName, INTENT_PERCEPTUAL, PyCMSError)
 
