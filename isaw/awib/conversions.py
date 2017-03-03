@@ -1,10 +1,11 @@
 from datetime import datetime
 from io import BytesIO
 import logging
-from logging import DEBUG, INFO
-from os.path import abspath, dirname, join
+from logging import DEBUG, INFO, CRITICAL
+from os.path import abspath, dirname, join, realpath
 from PIL import Image, TiffImagePlugin
-from PIL.ImageCms import getOpenProfile, getProfileName, profileToProfile
+from PIL.ImageCms import (applyTransform, buildTransform, getOpenProfile,
+                          getProfileName, INTENT_PERCEPTUAL, PyCMSError)
 
 
 class Historian():
@@ -45,23 +46,8 @@ class MasterMaker(Historian):
                 'initiated and opened image ({}) from file "{}"'
                 ''.format(self.original.format, src))
         self.dest = dest
-        self.profiles = {
-            'srgb2': getOpenProfile(
-                join(
-                    dirname(abspath(__file__)),
-                    'icc',
-                    'sRGB_IEC61966-2-1_black_scaled.icc')),
-            'srgb4': getOpenProfile(
-                join(
-                    dirname(abspath(__file__)),
-                    'icc',
-                    'sRGB_v4_ICC_preference.icc')),
-        }
-        self.profiles['original'] = self._original_profile()
-        self.master_info = TiffImagePlugin.ImageFileDirectory()
 
     def make(self):
-        self._make_mode_rgb()
         self._standardize_icc()
         return self.master
 
@@ -75,55 +61,62 @@ class MasterMaker(Historian):
         else:
             destination = abspath(dest)
         self.master.DEBUG = True
-        self.master.save(destination, tiffinfo=self.master_info)
+        self.master.save(destination)
 
-    def _make_mode_rgb(self):
-        if self.original.mode == 'RGB':
-            self.rgb = self.original
-            self.log('Original color mode is RGB.')
-        else:
-            self.rgb = self.original.convert('RGB')
-            self.log(
-                'Original color mode was {} so converted to RGB.'
-                ''.format(self.original.mode))
-
-    def _standardize_icc(self, target='srgb4'):
-        profile = self.profiles[target]
-        profile_name = getProfileName(profile).strip()
-        original = self.profiles['original']
-        original_name = getProfileName(original).strip()
-        if original == profile:
-            self.master = self.rgb
+    def _standardize_icc(self, target='ProPhoto'):
+        profile_target = self._get_profile_from_file(target)
+        profile_target_name = getProfileName(profile_target).strip()
+        profile_original = self._get_original_profile()
+        profile_original_name = getProfileName(profile_original).strip()
+        if profile_original == profile_target:
+            self.master = self.original
             self.log(
                 'Original ICC profile was already the specified target ({}).'
-                ''.format(profile_name))
+                ''.format(profile_target_name))
         else:
-            self.master = profileToProfile(
-                self.rgb,
-                original,
-                profile)
+            try:
+                tx = buildTransform(
+                    profile_original,
+                    profile_target,
+                    self.original.mode,
+                    'RGB',
+                    renderingIntent=INTENT_PERCEPTUAL)
+            except PyCMSError as e:
+                if str(e) == 'cannot build transform':
+                    if self.original.mode == 'P':
+                        im = self.original.convert('RGB')
+                        tx = buildTransform(
+                            profile_original,
+                            profile_target,
+                            im.mode,
+                            'RGB',
+                            renderingIntent=INTENT_PERCEPTUAL)
+                else:
+                    raise
+            else:
+                im = self.original
+            self.master = applyTransform(im, tx, inPlace=False)
             self.log(
                 'Original ICC profile ({}) was converted to the standard '
                 'target ({}).'
                 ''.format(
-                    original_name,
-                    profile_name))
-        self.master_info[TiffImagePlugin.ICCPROFILE] = profile.tobytes()
-        self.master_info.tagtype[TiffImagePlugin.ICCPROFILE] = 1
+                    profile_original_name,
+                    profile_target_name))
 
-    def _original_profile(self, force=False):
-        if not force:
-            try:
-                return self.profiles['original']
-            except AttributeError:
-                pass
-            except KeyError:
-                pass
+    def _get_profile_from_file(self, profile_name):
+        fn = join(
+            dirname(realpath(__file__)),
+            'icc',
+            '{}.icc'.format(profile_name))
+        return getOpenProfile(fn)
+
+    def _get_original_profile(self):
         try:
             raw_profile = getOpenProfile(
                 BytesIO(self.original.info['icc_profile']))
         except KeyError:
-            raw_profile = self.profiles['srgb2']
+            raw_profile = self._get_profile_from_file(
+                'sRGB_IEC61966-2-1_black_scaled')
             self.log(
                 'Original image does not have an internal ICC color profile.'
                 '{} has been assigned.'
@@ -134,15 +127,3 @@ class MasterMaker(Historian):
                 ''.format(getProfileName(raw_profile).strip()))
         return raw_profile
 
-
-        # original_profile = getOpenProfile(BytesIO(raw_profile))
-        # original_profile_name = getProfileName(original_profile).strip()
-        # target_profile = getOpenProfile(profile_srgb4)
-        # target_profile_name = getProfileName(target_profile).strip()
-        # logger.debug(
-        #     'attempting to convert from "{}" to "{}"'
-        #     ''.format(original_profile_name, target_profile_name))
-        # converted_image = profileToProfile(
-        #     original_image, original_profile, target_profile)
-#
-#

@@ -22,6 +22,9 @@ HAS_PROFILE = [
     'png',
     'tif'
 ]
+ALT_PROFILE = {
+    'cat_drawer_adobe.tif': 'Adobe RGB (1998)'
+}
 
 
 class TestPillow:
@@ -33,7 +36,7 @@ class TestPillow:
         self.file_list = [
             fn for fn in listdir(self.data_dir) if isfile(
                 join(self.data_dir, fn))]
-        assert_equal(len(self.file_list), 8)
+        assert_equal(len(self.file_list), 9)
         self.images = {}
         self.open_all()
 
@@ -45,7 +48,7 @@ class TestPillow:
             self.logger.debug('filename: "{}"'.format(fn))
             im = Image.open(join(self.data_dir, fn))
             self.images[fn] = im
-        assert_equal(len(self.images), 8)
+        assert_equal(len(self.images), 9)
 
     def test_format(self):
         for fn, im in self.images.items():
@@ -75,8 +78,13 @@ class TestPillow:
             if extension[1:] in HAS_PROFILE:
                 assert_in('icc_profile', im.info.keys())
                 profile = getOpenProfile(BytesIO(im.info['icc_profile']))
+                try:
+                    expected_profile = ALT_PROFILE[fn]
+                except KeyError:
+                    expected_profile = (
+                        'IEC 61966-2.1 Default RGB colour space - sRGB')
                 assert_equal(
                     getProfileName(profile).strip(),
-                    'IEC 61966-2.1 Default RGB colour space - sRGB')
+                    expected_profile)
             else:
                 assert_not_in('icc_profile', im.info.keys())
