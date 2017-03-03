@@ -19,6 +19,7 @@ class TestMakeConversions():
         self.file_list = [
             fn for fn in listdir(self.data_dir) if isfile(
                 join(self.data_dir, fn))]
+        self.file_list = [f for f in self.file_list if f != '.DS_Store']
         assert_equal(len(self.file_list), 9)
         self.images = {}
         self.open_all()
