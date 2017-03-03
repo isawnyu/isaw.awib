@@ -29,8 +29,7 @@ class TestMakeConversions():
             pass
 
     def tearDown(self):
-        # rmtree(join(self.data_dir, 'scratch'))
-        pass
+        rmtree(join(self.data_dir, 'scratch'))
 
     def open_all(self):
         for fn in self.file_list:
