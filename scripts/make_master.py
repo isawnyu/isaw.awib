@@ -6,6 +6,7 @@ import argparse
 from functools import wraps
 import inspect
 from isaw.awib.conversions import MasterMaker
+from isaw.awib import image_types
 import logging
 import os
 from os.path import isfile, isdir, join, realpath, split, splitext
@@ -49,6 +50,10 @@ def erexit(msg):
 def make_masters(src, dest, overwrite):
     if isfile(dest):
         erexit('Destination must be a directory if source is a directory')
+    file_list = [fn for fn in os.listdir(src) if isfile(join(src, fn))]
+    file_list = [fn for fn in file_list if image_types.is_valid_filename(fn)]
+    for fn in file_list:
+        make_a_master(join(src, fn), dest, overwrite)
 
 
 def make_a_master(src, dest, overwrite):
