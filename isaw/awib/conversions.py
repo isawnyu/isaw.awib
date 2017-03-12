@@ -62,6 +62,7 @@ class MasterMaker(Historian):
             destination = abspath(dest)
         self.master.DEBUG = True
         self.master.save(destination)
+        return destination
 
     def _standardize_icc(self, target='ProPhoto'):
         profile_target = self._get_profile_from_file(target)
