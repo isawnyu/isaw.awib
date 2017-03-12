@@ -14,15 +14,16 @@ import re
 import sys
 import traceback
 
-DEFAULT_LOG_LEVEL = logging.WARNING
+DEFAULT_LOG_LEVEL = logging.ERROR
 POSITIONAL_ARGUMENTS = [
-    ['-l', '--loglevel', logging.getLevelName(DEFAULT_LOG_LEVEL),
+    ['-l', '--loglevel', 'NOTSET',
         'desired logging level (' +
         'case-insensitive string: DEBUG, INFO, WARNING, or ERROR'],
     ['-v', '--verbose', False, 'verbose output (logging level == INFO)'],
     ['-w', '--veryverbose', False,
         'very verbose output (logging level == DEBUG)'],
-    ['-x', '--overwrite', False, 'overwite existing destination file']
+    ['-x', '--overwrite', False, 'overwite existing destination file'],
+    ['-q', '--quiet', False, 'suppress all messages to stdout']
 ]
 
 
@@ -65,6 +66,9 @@ def make_a_master(src, dest, overwrite):
         outf = dest
     if isfile(outf) and not overwrite:
         erexit('Destination file exists: "{}"'.format(outf))
+    else:
+        logging.warning(
+            'Destination file will be overwritten: "{}"'.format(outf))
     head, tail = split(outf)
     name, extension = splitext(tail)
     if extension != '.tif':
@@ -73,6 +77,7 @@ def make_a_master(src, dest, overwrite):
     m = MasterMaker(src)
     m.make()
     m.save(outf)
+    logging.info('Saved master version of {} as {}'.format(src, outf))
 
 
 @arglogger
@@ -94,7 +99,7 @@ def main(args):
 if __name__ == "__main__":
     log_level = DEFAULT_LOG_LEVEL
     log_level_name = logging.getLevelName(log_level)
-    logging.basicConfig(level=log_level)
+    logging.basicConfig(level=log_level, format='%(levelname)s: %(message)s')
     try:
         parser = argparse.ArgumentParser(
             description=__doc__,
@@ -132,7 +137,7 @@ if __name__ == "__main__":
             type=str,
             help='path to destination')
         args = parser.parse_args()
-        if args.loglevel is not None:
+        if args.loglevel is not 'NOTSET':
             args_log_level = re.sub('\s+', '', args.loglevel.strip().upper())
             try:
                 log_level = getattr(logging, args_log_level)
@@ -141,15 +146,15 @@ if __name__ == "__main__":
                     "command line option to set log_level failed "
                     "because '%s' is not a valid level name; using %s"
                     % (args_log_level, log_level_name))
-        if args.veryverbose:
-            log_level = logging.DEBUG
-        elif args.verbose:
+        elif args.veryverbose:
             log_level = logging.INFO
+        elif args.verbose:
+            log_level = logging.WARNING
+        elif args.quiet:
+            log_level = logging.CRITICAL
         log_level_name = logging.getLevelName(log_level)
-        logging.getLogger().setLevel(log_level)
-        fn_this = inspect.stack()[0][1].strip()
-        title_this = __doc__.strip()
-        logging.info(': '.join((fn_this, title_this)))
+        print('log level is {}'.format(log_level_name))
+        logging.basicConfig(level=log_level)
         if log_level != DEFAULT_LOG_LEVEL:
             logging.warning(
                 "logging level changed to %s via command line option"
