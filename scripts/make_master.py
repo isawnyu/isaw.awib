@@ -4,7 +4,6 @@ Make a master image for an existing original
 
 import argparse
 from functools import wraps
-import inspect
 from isaw.awib.conversions import MasterMaker
 from isaw.awib import image_types
 import logging
@@ -135,7 +134,9 @@ if __name__ == "__main__":
         parser.add_argument(
             'destination',
             type=str,
-            help='path to destination')
+            help=(
+                'path to destination (i.e., new master file; must end in .tif'
+                ))
         args = parser.parse_args()
         if args.loglevel is not 'NOTSET':
             args_log_level = re.sub('\s+', '', args.loglevel.strip().upper())
