@@ -19,6 +19,13 @@ then
     exit 30
 fi
 
+generate_checksums() {
+    gmd5sum -b "$1" > "$2.md5"
+    gsha1sum -b "$1" > "$2.sha1"
+    gsha256sum -b "$1" > "$2.sha256"
+    gsha512sum -b "$1" > "$2.sha512"
+}
+
 src=$1
 dest=$2
 fn=$(basename "$src")
@@ -40,16 +47,16 @@ then
     exit 40
 fi
 
-# generate and save original checksums
-gmd5sum -b "$original" > "$target/original.md5"
-gsha1sum -b "$original" > "$target/original.sha1"
-gsha256sum -b "$original" > "$target/original.sha256"
-gsha512sum -b "$original" > "$target/original.sha512"
-
-# capture jhove results
+# capture information about the original image file
+generate_checksums "$original" "$target/original"
 $JHOVEHOME/jhove -h xml -ks -o "$target/original_jhove.xml" "$original"
+exiftool -X -struct -u "$original" > "$target/original_exiftool.xml"
 
-# make a master tiff file
-python "$PYTHONPATH/scripts/make_master.py" -q "$original" "$target/master.tif"
+# make a master tiff file and capture information about it
+master="$target/master.tif"
+python "$PYTHONPATH/scripts/make_master.py" -q "$original" "$master"
+generate_checksums "$master" "$target/master"
+$JHOVEHOME/jhove -h xml -ks -o "$target/master_jhove.xml" "$master"
+exiftool -X -struct -u "$master" > "$target/master_exiftool.xml"
 
 exit
