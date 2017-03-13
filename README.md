@@ -1,9 +1,65 @@
-# A sample Python project README file
+# isaw.awib: Tools for managing images at ISAW
 
-This is the README file for the project.
+"isaw" = Institute for the Study of the Ancient World
 
-The file should use UTF-8 encoding and be written using [Github-flavored Markdown Text](https://guides.github.com/features/mastering-markdown/). It will be displayed as the package repository home page on [GitHub](https://github.com/), and should be written for that purpose. 
+"awib" = Ancient World Image Bank
 
-Note that, if and when the package is to be distributed via [PyPI](https://pypi.python.org/pypi)r, it will be necessary to convert this file to [reStructuredText](http://docutils.sourceforge.net/rst.html) format. [Pandoc](http://pandoc.org/) is the preferred tool for this task.
+## Installation
 
-Typical contents for this file would include an overview of the project, basic usage examples, etc. Generally, including the project changelog in here is not a good idea, although a simple "What's New" section for the most recent version may be appropriate.
+### Requirements
+
+See also ```setup.py['install_requires']```.
+
+ - Python 3.6.0
+ - Pillow 4.0.0 
+ - Nose 1.3.7 (to run tests)
+
+## Scripts
+
+All scripts are found in the ```/scripts``` directory. 
+
+## make_master.py
+
+Make a master image for an existing original.
+
+```
+$ python scripts/make_master.py -h
+usage: make_master.py [-h] [-l LOGLEVEL] [-v] [-w] [-x] [-q]
+                      original destination
+
+Make a master image for an existing original
+
+positional arguments:
+  original              path to original image file
+  destination           path to destination
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -l LOGLEVEL, --loglevel LOGLEVEL
+                        desired logging level (case-insensitive string: DEBUG,
+                        INFO, WARNING, or ERROR (default: NOTSET)
+  -v, --verbose         verbose output (logging level == INFO) (default:
+                        False)
+  -w, --veryverbose     very verbose output (logging level == DEBUG) (default:
+                        False)
+  -x, --overwrite       overwite existing destination file (default: False)
+  -q, --quiet           suppress all messages to stdout (default: False)
+```
+
+## Tests
+
+To make sure everything is working, run the tests:
+
+```
+$ nosetests
+.......
+----------------------------------------------------------------------
+Ran 7 tests in 2.006s
+
+OK
+```
+
+To see how things work inside, inspecting the tests might be helpful. You can find them in ```isaw/awib/tests```. 
+
+
+
