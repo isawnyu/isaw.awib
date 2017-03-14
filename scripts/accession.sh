@@ -20,7 +20,11 @@ then
 fi
 
 generate_checksums() {
-    gsha512sum -b "$1" > "$2.sha512"
+    local dirn=$(dirname "$1")
+    local fn=$(basename "$1")
+    local ext="${fn##*.}"
+    local name="${fn%.*}"
+    gsha512sum -b "$1" > "$dirn/$name.sha512"
 }
 
 src=$1
@@ -45,14 +49,14 @@ then
 fi
 
 # capture information about the original image file
-generate_checksums "$original" "$target/original"
+generate_checksums "$original"
 $JHOVEHOME/jhove -h xml -ks -o "$target/original_jhove.xml" "$original"
 exiftool -X -struct -u "$original" > "$target/original_exiftool.xml"
 
 # make a master tiff file and capture information about it
 master="$target/master.tif"
 python "$PYTHONPATH/scripts/make_master.py" -q "$original" "$master"
-generate_checksums "$master" "$target/master"
+generate_checksums "$master"
 $JHOVEHOME/jhove -h xml -ks -o "$target/master_jhove.xml" "$master"
 exiftool -X -struct -u "$master" > "$target/master_exiftool.xml"
 
