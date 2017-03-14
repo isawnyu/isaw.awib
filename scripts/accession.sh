@@ -24,7 +24,9 @@ generate_checksums() {
     local fn=$(basename "$1")
     local ext="${fn##*.}"
     local name="${fn%.*}"
-    gsha512sum -b "$1" > "${dirn}/${name}.sha512"
+    local shaname="${name}.sha512"
+    local sha512=$(gsha512sum -b "$1" | awk '{print $1;}')
+    echo "$sha512  $fn" > "${dirn}/$shaname"
 }
 
 identify_with_jhove() {
