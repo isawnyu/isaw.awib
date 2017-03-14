@@ -24,7 +24,7 @@ generate_checksums() {
     local fn=$(basename "$1")
     local ext="${fn##*.}"
     local name="${fn%.*}"
-    gsha512sum -b "$1" > "$dirn/${name}.sha512"
+    gsha512sum -b "$1" > "${dirn}/${name}.sha512"
 }
 
 identify_with_jhove() {
@@ -32,9 +32,19 @@ identify_with_jhove() {
     local fn=$(basename "$1")
     local ext="${fn##*.}"
     local name="${fn%.*}"
-    local jhove_path="$dirn/${name}_jhove.xml"
+    local jhove_path="${dirn}/${name}_jhove.xml"
     "$JHOVEHOME/jhove" -h xml -ks -o "$jhove_path" "$1"
     generate_checksums "$jhove_path"
+}
+
+extract_metadata() {
+    local dirn=$(dirname "$1")
+    local fn=$(basename "$1")
+    local ext="${fn##*.}"
+    local name="${fn%.*}"
+    local exiftool_path="${dirn}/${name}_exiftool.xml"
+    exiftool -X -struct -u "$1" > "$exiftool_path"
+    generate_checksums "$exiftool_path"
 }
 
 src=$1
@@ -61,13 +71,13 @@ fi
 # capture information about the original image file
 generate_checksums "$original"
 identify_with_jhove "$original"
-exiftool -X -struct -u "$original" > "$target/original_exiftool.xml"
+extract_metadata "$original"
 
 # make a master tiff file and capture information about it
 master="$target/master.tif"
 python "$PYTHONPATH/scripts/make_master.py" -q "$original" "$master"
 generate_checksums "$master"
 identify_with_jhove "$master"
-exiftool -X -struct -u "$master" > "$target/master_exiftool.xml"
+extract_metadata "$master"
 
 exit
