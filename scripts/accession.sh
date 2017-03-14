@@ -20,9 +20,6 @@ then
 fi
 
 generate_checksums() {
-    gmd5sum -b "$1" > "$2.md5"
-    gsha1sum -b "$1" > "$2.sha1"
-    gsha256sum -b "$1" > "$2.sha256"
     gsha512sum -b "$1" > "$2.sha512"
 }
 
