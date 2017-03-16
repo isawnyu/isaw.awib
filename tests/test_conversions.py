@@ -46,22 +46,30 @@ class TestMakeConversions():
         MasterMaker(join(self.data_dir, 'cat_drawer.tif'))
 
     def test_master_maker_icc(self):
-        profile_target_path = abspath(join(
-            dirname(realpath(__file__)),
-            '..',
-            'isaw',
-            'awib',
-            'icc',
-            '{}.icc'.format('ProPhoto')))
-        profile_target = getOpenProfile(profile_target_path)
+        srgb = 'IEC 61966-2-1 Default RGB Colour Space - sRGB'
+        pp = 'ProPhoto - little cms'
+        expected_icc = {
+            'cat_drawer.jpf': srgb,
+            'cat_drawer.jpg': srgb,
+            'cat_drawer.png': srgb,
+            'cat_drawer.tif': srgb,
+            'cat_drawer_adobe.tif': pp,
+            'cat_drawer_posterized.bmp': srgb,
+            'cat_drawer_posterized.gif': srgb,
+            'cat_drawer_posterized.png': srgb,
+            'cat_drawer_posterized.tif': srgb,
+            'morning-alley-2010.jpg': srgb
+        }
         for fn, im in self.images.items():
-            maker = MasterMaker(im)
+            self.logger.debug('icc test handling file {}'.format(fn))
+            maker = MasterMaker(im, logging_threshold=logging.DEBUG)
             maker.make()
             master = maker.master
             assert_equal(
                 getProfileName(
-                    getOpenProfile(BytesIO(master.info['icc_profile']))),
-                getProfileName(profile_target))
+                    getOpenProfile(
+                        BytesIO(master.info['icc_profile']))).strip(),
+                expected_icc[fn])
 
     def test_master_maker_save(self):
         self.logger.debug('test_master_maker_save')

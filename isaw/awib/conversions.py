@@ -64,11 +64,17 @@ class MasterMaker(Historian):
         self.master.save(destination)
         return destination
 
-    def _standardize_icc(self, target='ProPhoto'):
-        profile_target = self._get_profile_from_file(target)
-        profile_target_name = getProfileName(profile_target).strip()
+    def _standardize_icc(self):
         profile_original = self._get_original_profile()
         profile_original_name = getProfileName(profile_original).strip()
+        self.log('profile_original_name: "{}"'.format(profile_original_name))
+        if ('sRGB' in profile_original_name or
+                'IEC 61966-2-1' in profile_original_name):
+                target = 'sRGB2014'
+        else:
+            target = 'ProPhoto'
+        profile_target = self._get_profile_from_file(target)
+        profile_target_name = getProfileName(profile_target).strip()
         if profile_original == profile_target:
             self.master = self.original
             self.log(
