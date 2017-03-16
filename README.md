@@ -6,17 +6,56 @@
 
 ## Installation
 
-### Requirements
+### Requirements and Setup
+
+```isaw.awib``` has been developed and tested only on OSX 10.11.
+
+#### Languages and Runtime Environments:
+
+(h) indicates items installed with [Homebrew](https://brew.sh/)
+(p) indicates items installed with pip
+
+ - [Exiftool](http://www.sno.phy.queensu.ca/~phil/exiftool/) 10.40 or later (h)
+ - Java(TM) SE Runtime Environment 1.5 or later
+ - OSX 10.11.6
+ - Python 3.6.0 (h; a virtual environment is **highly** recommended)
+
+#### Programs:
+
+ - [Jhove](http://jhove.openpreservation.org/) 1.14.6
+
+#### Python Packages:
+
+ - Nose 1.3.7 (p; to run tests)
+ - Pillow 4.0.0 (p, but NB [Pillow prerequisites](https://pillow.readthedocs.io/en/4.0.x/installation.html#building-on-macos), which can be installed with h)
+ - Pip 9.0.1 (h; installs with Python 3.6.0)
 
 See also ```setup.py['install_requires']```.
 
- - Python 3.6.0
- - Pillow 4.0.0 
- - Nose 1.3.7 (to run tests)
+#### Environment variables
+
+ - set ```PYTHONPATH``` to point to the ```isaw.awib``` directory
+ - set ```JHOVEHOME``` to point to the directory where jhove is installed
 
 ## Scripts
 
 All scripts are found in the ```/scripts``` directory. 
+
+## accession.sh
+
+A bash script to accession an original image. It performs the following actions:
+
+ - Create a destination folder with specified name
+ - Copy the original image to the destination folder and rename "original" (verify that copy was successful)
+ - Use ```make_master.py``` q.v. to create a master tiff version of the original
+ - Use exiftool to extract metadata from the original and master and save to XML files
+ - Use jhove to save format identification data for the original and master to XML files
+ - Use GNU sha512sum to generate and store checksums for each file 
+
+
+```
+$ scripts/accession.sh path/to/image/file path/to/destination/directory
+``` 
 
 ## make_master.py
 
