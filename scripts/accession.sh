@@ -49,6 +49,17 @@ extract_metadata() {
     generate_checksums "$exiftool_path"
 }
 
+safecopy () {
+    cp -p $1 $2
+    local src_sum=$(gmd5sum -b "$1" | awk '{print $1;}')
+    local dest_sum=$(gmd5sum -b "$2" | awk '{print $1}')
+    if [ "$src_sum" != "$dest_sum" ]
+    then
+        echo "copy from $1 to $2 failed on checksum verification"
+        exit 40
+    fi
+}
+
 src=$1
 dest=$2
 fn=$(basename "$src")
@@ -61,14 +72,7 @@ mkdir "$target"
 temp="$target/.tmp"
 mkdir "$temp"
 original="$target/original.$ext"
-cp "$src" "$original"
-src_sum=$(gmd5sum -b "$src" | awk '{print $1;}')
-dest_sum=$(gmd5sum -b "$original" | awk '{print $1}')
-if [ "$src_sum" != "$dest_sum" ]
-then
-    echo "copy from $src to $original failed on checksum verification"
-    exit 40
-fi
+safecopy "$src" "$original"
 
 # capture information about the original image file
 generate_checksums "$original"
