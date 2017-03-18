@@ -49,6 +49,7 @@ reformatmeta () {
 
 guid=$(python "$PYTHONPATH"'/scripts/make_guid.py' "$pkgpath")
 exiftool -DigitalImageGUID="$guid" "$pkgpath"'/master.tif'
+rm "$pkgpath"'/master.tif_original'
 insertmeta '/image-info/status' guid "$guid"
 insertmeta '//change-history/change[1]' change
 submeta '//change[1]' 'date' $(gdate -u --iso-8601=seconds)
