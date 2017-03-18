@@ -3,11 +3,12 @@ Make a master image for an existing original
 """
 
 import argparse
-from functools import wraps
 import logging
+from lxml import etree
 import os
 from os.path import isfile, isdir, join, realpath, split, splitext
 import re
+from slugify import slugify
 import sys
 import traceback
 import uuid
@@ -20,8 +21,19 @@ POSITIONAL_ARGUMENTS = [
     ['-v', '--verbose', False, 'verbose output (logging level == INFO)'],
     ['-w', '--veryverbose', False,
         'very verbose output (logging level == DEBUG)'],
-    ['-m', '--hostname', 'images.isaw.nyu.edu', 'hostname for URL']
+    ['-n', '--hostname', 'images.isaw.nyu.edu', 'hostname for URL']
 ]
+
+RX_WHITESPACE = re.compile(r'\s+')
+
+
+def get_text(tree, xpath):
+    return ' '.join(
+        etree.tostring(
+            tree.xpath(xpath)[0],
+            method="text",
+            encoding="unicode"
+        ).split())
 
 
 def main(args):
@@ -29,7 +41,14 @@ def main(args):
     main function
     """
     # logger = logging.getLogger(sys._getframe().f_code.co_name)
-    name = 'https://{}/{}'.format(args.hostname, args.name)
+    metapath = join(realpath(args.pkg_path), 'metadata.xml')
+    meta = etree.parse(metapath)
+    photographer = get_text(meta, "//info[@type='isaw']/photographer")
+    title = get_text(meta, "//info[@type='isaw']/title")
+    original = get_text(meta, "//original-file-name")
+    name = '/'.join((slugify(photographer), slugify(title), original))
+    name = '-'.join(name.split()).lower()
+    name = 'https://{}/{}'.format(args.hostname, name)
     guid = uuid.uuid5(uuid.NAMESPACE_URL, name)
     print(guid.urn)
 
@@ -67,9 +86,9 @@ if __name__ == "__main__":
         #     nargs='1',
         #     help="foo is better than bar except when it isn't")
         parser.add_argument(
-            'name',
+            'pkg_path',
             type=str,
-            help='GUID5 name to use')
+            help='path to image package')
         args = parser.parse_args()
         if args.loglevel is not 'NOTSET':
             args_log_level = re.sub('\s+', '', args.loglevel.strip().upper())
