@@ -98,7 +98,7 @@ copy_meta () {
     logit $4 "copied $from to $(basename $to)"
     generate_checksums $to
     saxon -s:"$to" -xsl:"$here"/update_metadata.xsl -o:"$4"/metadata.xml operator="$realname"
-    generate_checksums "$4"/metadata.xml
+    # don't bother generating checksum now; wait till after guid generation 
 }
 
 copy_original () {
@@ -146,7 +146,12 @@ do
     master="$target/master.tif"
     python "$PYTHONPATH/scripts/make_master.py" -q "$original" "$master"
     logit $target 'generated master.tif from '"$(basename $original))"' using '"$PYTHONPATH"'/scripts/make_master.py'
+    exiftool -tagsfromfile "$original" -all:all "$master"
+    logit $target 'copied embedded metadata from '"$original"' to '"$master"' using exiftool'
+    bash "$here"'/make_guid.sh' "$target"
+    logit $target 'generated image GUID and inserted in master.tif and metadata.xml using '"$PYTHONPATH"'/scripts/make_guid.sh'
     generate_checksums "$master"
+    generate_checksums "$target"'/metadata.xml'
     identify_with_jhove "$master"
     extract_metadata "$master"
     logit $target 'RESWIZZLE COMPLETE: PACKAGE IMPORT COMPLETE\n# '"$dashes"
