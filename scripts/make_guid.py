@@ -41,12 +41,17 @@ def main(args):
     main function
     """
     # logger = logging.getLogger(sys._getframe().f_code.co_name)
-    metapath = join(realpath(args.pkg_path), 'metadata.xml')
+    pkg_path = realpath(args.pkg_path)
+    metapath = join(pkg_path, 'metadata.xml')
     meta = etree.parse(metapath)
     photographer = get_text(meta, "//info[@type='isaw']/photographer")
     title = get_text(meta, "//info[@type='isaw']/title")
     original = get_text(meta, "//original-file-name")
-    name = '/'.join((slugify(photographer), slugify(title), original))
+    name = '/'.join((
+        slugify(pkg_path),
+        slugify(photographer),
+        slugify(title),
+        original))
     name = '-'.join(name.split()).lower()
     name = 'https://{}/{}'.format(args.hostname, name)
     guid = uuid.uuid5(uuid.NAMESPACE_URL, name)
