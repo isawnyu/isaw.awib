@@ -79,9 +79,11 @@ generate_checksums "$original"
 identify_with_jhove "$original"
 extract_metadata "$original"
 
-# make a master tiff file and capture information about it
+# make a master tiff file, copy embedded data, and capture information about it
 master="$target/master.tif"
 python "$PYTHONPATH/scripts/make_master.py" -q "$original" "$master"
+exiftool -tagsfromfile "$original" -all:all "$master"
+bash "$here"'/make_guid.sh' "$target"
 generate_checksums "$master"
 identify_with_jhove "$master"
 extract_metadata "$master"
