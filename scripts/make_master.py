@@ -76,7 +76,7 @@ def make_a_master(src, dest, overwrite):
     m = MasterMaker(src)
     m.make()
     m.save(outf)
-    logging.info('Saved master version of {} as {}'.format(src, outf))
+    # logging.info('Saved master version of {} as {}'.format(src, outf))
 
 
 @arglogger
@@ -154,7 +154,8 @@ if __name__ == "__main__":
         elif args.quiet:
             log_level = logging.CRITICAL
         log_level_name = logging.getLevelName(log_level)
-        print('log level is {}'.format(log_level_name))
+        if not args.quiet:
+            print('log level is {}'.format(log_level_name))
         logging.basicConfig(level=log_level)
         if log_level != DEFAULT_LOG_LEVEL:
             logging.warning(
