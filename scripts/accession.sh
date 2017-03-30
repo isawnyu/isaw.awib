@@ -1,5 +1,5 @@
 #!/bin/bash
-set -ex
+set -e
 
 if [ -z ${JHOVEHOME+x} ]
 then 
@@ -22,7 +22,7 @@ fi
 here="$(dirname "${BASH_SOURCE[0]}")"
 src=$1
 dest=$2
-img_name=$3
+img_name="${3// }"
 fn=$(basename "$src")
 ext="${fn##*.}"
 name="${fn%.*}"
@@ -80,7 +80,7 @@ safecopy () {
 }
 
 # copy original to destination (verify with checksum)
-if [ "$img_name" != '' ]; then
+if [ "$img_name" ]; then
     imgid="$img_name"
 else
     imgid="$name"
@@ -112,7 +112,7 @@ extract_metadata "$master"
 # instantiate metadata file
 saxon -s:"${target}/original_exiftool.xml" -xsl:"$here"/exiftool2meta.xsl -o:"$target"/metadata.xml agent="$realname" jhove_file="${dirn}/original_jhove.xml" iptc_name="$img_name"
 logit $target 'created metadata.xml file using isaw.awib/scripts/exiftool2meta.xsl to transform metadata extracted with exiftool and with jhove.'
-bash "$here"'/make_guid.sh' "$target"
+bash "$here"'/make_guid.sh' "$target" "$imgid"
 logit $target 'generated and assigned a GUID to this image'
 generate_checksums "$master"
 generate_checksums "$target"/metadata.xml
