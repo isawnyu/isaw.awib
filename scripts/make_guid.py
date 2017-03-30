@@ -21,7 +21,8 @@ POSITIONAL_ARGUMENTS = [
     ['-v', '--verbose', False, 'verbose output (logging level == INFO)'],
     ['-w', '--veryverbose', False,
         'very verbose output (logging level == DEBUG)'],
-    ['-n', '--hostname', 'images.isaw.nyu.edu', 'hostname for URL']
+    ['-m', '--hostname', 'images.isaw.nyu.edu', 'url hostname'],
+    ['-n', '--name', '', 'shortname for image']
 ]
 
 RX_WHITESPACE = re.compile(r'\s+')
@@ -41,18 +42,13 @@ def main(args):
     main function
     """
     # logger = logging.getLogger(sys._getframe().f_code.co_name)
-    pkg_path = realpath(args.pkg_path)
-    metapath = join(pkg_path, 'metadata.xml')
-    meta = etree.parse(metapath)
-    photographer = get_text(meta, "//info[@type='isaw']/photographer")
-    title = get_text(meta, "//info[@type='isaw']/title")
-    original = get_text(meta, "//original-file-name")
-    name = '/'.join((
-        slugify(pkg_path),
-        slugify(photographer),
-        slugify(title),
-        original))
-    name = '-'.join(name.split()).lower()
+    if args.name != '':
+        name = slugify(args.name.lower())
+    else:
+        pkg_path = realpath(args.pkg_path)
+        metapath = join(pkg_path, 'metadata.xml')
+        meta = etree.parse(metapath)
+        name = get_text(meta, "//iptc_name")
     name = 'https://{}/{}'.format(args.hostname, name)
     guid = uuid.uuid5(uuid.NAMESPACE_URL, name)
     print(guid.urn)
