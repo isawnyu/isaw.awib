@@ -41,7 +41,7 @@ def main(args):
     """
     main function
     """
-    # logger = logging.getLogger(sys._getframe().f_code.co_name)
+    logger = logging.getLogger(sys._getframe().f_code.co_name)
     if args.name != '':
         name = slugify(args.name.lower())
     else:
@@ -49,8 +49,11 @@ def main(args):
         metapath = join(pkg_path, 'metadata.xml')
         meta = etree.parse(metapath)
         name = get_text(meta, "//iptc_name")
+    logger.debug('raw name: "{}"'.format(name))
     name = 'https://{}/{}'.format(args.hostname, name)
+    logger.debug('full name: "{}"'.format(name))
     guid = uuid.uuid5(uuid.NAMESPACE_URL, name)
+    logger.debug('guid: "{}"'.format(guid))
     print(guid.urn)
 
 
