@@ -517,7 +517,9 @@ def main(args):
                     for x in MODIFIED])))
     change_history = meta.xpath('//change-history')[0]
     change_history.insert(0, change)
-    print(etree.tostring(meta, pretty_print=True, encoding="unicode"))
+    os.rename(meta_path, meta_path+".bak")
+    with open(meta_path, 'w', encoding="UTF-8") as f:
+        f.write(etree.tostring(meta, pretty_print=True, encoding="unicode"))
 
 if __name__ == "__main__":
     log_level = DEFAULT_LOG_LEVEL
