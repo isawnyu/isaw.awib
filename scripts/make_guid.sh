@@ -24,10 +24,10 @@ if [ "$name" ]; then
 else
     guid=$(python "$PYTHONPATH"'/scripts/make_guid.py' -n "$name" "$pkgpath")
 fi
-echo 'guid returned: '"$guid"
 exiftool -q -DigitalImageGUID="$guid" "$pkgpath"'/master.tif'
 rm "$pkgpath"'/master.tif_original'
 cp -p "$metapath" "$metapath".bak
 saxon -s:"$metapath" -xsl:"$here"/setmetaval.xsl -o:"$metapath" agent="$realname" target=guid value="$guid"
 rm "$metapath".bak
+echo 'assigned unique identifier (GUID): '"$guid"
 exit
