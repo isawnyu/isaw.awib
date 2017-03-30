@@ -37,12 +37,17 @@ OPTIONAL_ARGUMENTS = [
     ['-g', '--geonames_user', '', 'username for geonames api'],
     ['-p', '--photographer', '',
         'value, registry ID, or copy: for photographer'],
-    ['-ch', '--copyright_holder', '', 'value or copy: for copyright holder']
+    ['-ch', '--copyright_holder', '', 'value or copy: for copyright holder'],
+    ['-dp', '--date_photographed', '', 'value or copy: for date photographed']
 ]
 PEOPLE_REGISTER = {}
 
 
 class EditBailout(Exception):
+    pass
+
+
+class NoSuchOriginal(Exception):
     pass
 
 
@@ -346,7 +351,20 @@ def force_it(tree, element, cmd):
         result = set_with_url(element, cmd)
         MODIFIED.append(tree.getpath(element))
     elif cmd == 'copy:original':
-        pass
+        path = tree.getpath(element).split('/')
+        if 'info[2]' in path:
+            path = path[path.index('info[2]')+1:]
+        xp = ['//info[@type=\'original\']']
+        xp.extend(path)
+        xp = '/'.join(xp)
+        try:
+            orig = tree.xpath(xp)[0]
+        except IndexError:
+            pass
+        else:
+            if orig.text is not None:
+                set_text(element, orig.text)
+                MODIFIED.append(tree.getpath(element))
     elif cmd.startswith('registry:'):
         result = set_with_registry(element, cmd[9:])
         MODIFIED.append(tree.getpath(element))
@@ -440,8 +458,6 @@ def get_val(tree, element, args):
                 for k, v in d.items():
                     directives[k] = v
     else:
-        # set indent
-
         # display current value, if any
         if element.text is not None:
             print(Style.DIM + '{}currently: "{}"'.format(pad, element.text))
@@ -489,6 +505,7 @@ def get_val(tree, element, args):
 
 
 def main(args):
+    logger = logging.getLogger(sys._getframe().f_code.co_name)
     populate_registry(args.people_registry)
     meta_path = realpath(args.meta_file)
     lxml_parser = etree.XMLParser(remove_blank_text=True)
@@ -499,6 +516,9 @@ def main(args):
     except EditBailout:
         print('fine, be that way')
     else:
+        for dest_tag, directive in directives.items():
+            logger.debug(
+                'directive for "{}" is "{}"'.format(dest_tag, directive))
         for dest_tag, directive in directives.items():
             cmd, src_tag = directive.split(':')
             if cmd == 'copy':
@@ -522,9 +542,6 @@ def main(args):
         f.write(etree.tostring(meta, pretty_print=True, encoding="unicode"))
 
 if __name__ == "__main__":
-    log_level = DEFAULT_LOG_LEVEL
-    log_level_name = logging.getLevelName(log_level)
-    logging.basicConfig(level=log_level, format='%(levelname)s: %(message)s')
     try:
         parser = argparse.ArgumentParser(
             description=__doc__,
@@ -571,11 +588,15 @@ if __name__ == "__main__":
                 logging.error(
                     "command line option to set log_level failed "
                     "because '%s' is not a valid level name; using %s"
-                    % (args_log_level, log_level_name))
+                    % (args_log_level, logging.getLevelName(
+                        DEFAULT_LOG_LEVEL)))
+                log_level = DEFAULT_LOG_LEVEL
         elif args.veryverbose:
-            log_level = logging.INFO
+            log_level = logging.DEBUG
         elif args.verbose:
-            log_level = logging.WARNING
+            log_level = logging.INFO
+        else:
+            log_level = DEFAULT_LOG_LEVEL
         log_level_name = logging.getLevelName(log_level)
         logging.basicConfig(level=log_level)
         if log_level != DEFAULT_LOG_LEVEL:
