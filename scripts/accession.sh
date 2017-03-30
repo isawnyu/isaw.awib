@@ -119,5 +119,5 @@ generate_checksums "$target"/metadata.xml
 logit $target 'ACCESSION COMPLETE: IMAGE PACKAGING COMPLETE\n# '"$dashes"
 "$here"/validate.sh "$target"
 logit $target 'Package successfully validated with isaw.awib/scripts.validate.sh.'
-
+echo 'created new image package at '"$target"
 exit
