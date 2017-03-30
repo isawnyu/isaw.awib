@@ -12,6 +12,7 @@ import logging
 from lxml import etree
 import os
 from os.path import realpath
+import pwd
 import re
 import requests
 import sys
@@ -22,6 +23,8 @@ import codecs
 
 
 colorama.init(autoreset=True)
+
+MODIFIED = []
 
 DEFAULT_LOG_LEVEL = logging.ERROR
 OPTIONAL_ARGUMENTS = [
@@ -101,6 +104,7 @@ def do_copy(tree, src_tag, dest_tag):
     else:
         for child in src:
             dest.append(deepcopy(child))
+    MODIFIED.append(tree.getpath(dest))
 
 
 def get_suggestion(tag):
@@ -340,14 +344,17 @@ def force_it(tree, element, cmd):
         ''.format(element.tag.replace('-', '_'), cmd))
     if cmd.startswith('http'):
         result = set_with_url(element, cmd)
+        MODIFIED.append(tree.getpath(element))
     elif cmd == 'copy:original':
         pass
     elif cmd.startswith('registry:'):
         result = set_with_registry(element, cmd[9:])
+        MODIFIED.append(tree.getpath(element))
     elif cmd.startswith('copy:'):
         directives[element.tag] = cmd
     else:
         set_text(element, cmd)
+        MODIFIED.append(tree.getpath(element))
     return (result, directives)
 
 
@@ -361,9 +368,11 @@ def handle_input(tree, element, orig, suggestion, pad):
     elif s == '=o' and orig is not None:
         print('{}capturing original: "{}"'.format(pad, orig.text))
         set_text(element, orig.text)
+        MODIFIED.append(tree.getpath(element))
     elif s == '=e':
         print('{}erasing current value'.format(pad))
         element.text = None
+        MODIFIED.append(tree.getpath(element))
     elif s == '=s' and suggestion != '':
         if suggestion.startswith('[same as'):
             where = suggestion[8:-1]
@@ -377,8 +386,10 @@ def handle_input(tree, element, orig, suggestion, pad):
                     ''.format(s, '" or "'.join(options)))
             else:
                 set_text(element, s)
+                MODIFIED.append(tree.getpath(element))
         else:
             set_text(element.text, suggestion)
+            MODIFIED.append(tree.getpath(element))
     elif s == '=x':
         print('{}exit'.format(pad))
         raise EditBailout('user requested exit')
@@ -386,20 +397,25 @@ def handle_input(tree, element, orig, suggestion, pad):
         print(
             '{}converting GPS data from exif content in original'.format(pad))
         result, lat, lon = set_with_gps(tree, element)
+        MODIFIED.append(tree.getpath(element))
     elif s.startswith('=registry:'):
         result = set_with_registry(element, s[9:])
+        MODIFIED.append(tree.getpath(element))
     elif s == '=gpsgeonames' and 'place' in element.tag:
         print(
             '{}converting GPS data from exif content in original'.format(pad))
         result, lat, lon = set_with_gps(tree, element)
         print('{}querying geonames for closest place'.format(pad))
         result = set_with_geonames_latlon(element, lat, lon)
+        MODIFIED.append(tree.getpath(element))
     elif s.startswith('http'):
         result = set_with_url(element, s)
+        MODIFIED.append(tree.getpath(element))
     elif len(s) > 1 and s[0] == '=':
         directives[element.tag] = 'copy:{}'.format(s[1:])
     else:
         set_text(element, s)
+        MODIFIED.append(tree.getpath(element))
     return (result, directives)
 
 
@@ -487,8 +503,21 @@ def main(args):
             cmd, src_tag = directive.split(':')
             if cmd == 'copy':
                 do_copy(meta, src_tag, dest_tag)
+    change = etree.Element('change')
+    e = etree.SubElement(change, 'date')
+    e.text = datetime.now(timezone.utc).isoformat()
+    e = etree.SubElement(change, 'agent')
+    e.text = pwd.getpwuid(os.getuid())[4]
+    e = etree.SubElement(change, 'description')
+    e.text = (
+        'Modified the following fields in the isaw info section: {}.'
+        ''.format(
+            ', '.join(
+                [(x, x.split('/')[-1])[x.startswith('/image-info/info[2]/')]
+                    for x in MODIFIED])))
+    change_history = meta.xpath('//change-history')[0]
+    change_history.insert(0, change)
     print(etree.tostring(meta, pretty_print=True, encoding="unicode"))
-
 
 if __name__ == "__main__":
     log_level = DEFAULT_LOG_LEVEL
